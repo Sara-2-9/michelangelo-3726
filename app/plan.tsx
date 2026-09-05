@@ -1,6 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,12 +14,33 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlan } from "../context/PlanContext";
 import { DAYS, DAY_NAMES, RECIPES } from "../utils/recipes";
 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_WIDTH = SCREEN_WIDTH - 56;
+const CARD_GAP = 12;
+const SNAP_INTERVAL = CARD_WIDTH + CARD_GAP;
+const SIDE_INSET = (SCREEN_WIDTH - CARD_WIDTH) / 2 - CARD_GAP;
+
 export default function PlanScreen() {
   const { budget } = usePlan();
   const [dayIndex, setDayIndex] = useState(0);
+  const carouselRef = useRef<ScrollView>(null);
 
-  const recipe = RECIPES[dayIndex];
   const estCost = Math.round(budget);
+
+  const goToDay = (index: number) => {
+    setDayIndex(index);
+    carouselRef.current?.scrollTo({ x: index * SNAP_INTERVAL, animated: true });
+  };
+
+  const handleMomentumEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>
+  ) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / SNAP_INTERVAL);
+    if (index >= 0 && index < DAYS.length && index !== dayIndex) {
+      setDayIndex(index);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -41,7 +65,7 @@ export default function PlanScreen() {
               <TouchableOpacity
                 key={day}
                 style={[styles.dayPill, selected && styles.dayPillSelected]}
-                onPress={() => setDayIndex(index)}
+                onPress={() => goToDay(index)}
                 activeOpacity={0.8}
               >
                 <Text
@@ -59,45 +83,70 @@ export default function PlanScreen() {
       </SafeAreaView>
 
       <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
+        ref={carouselRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={SNAP_INTERVAL}
+        decelerationRate="fast"
+        disableIntervalMomentum
+        onMomentumScrollEnd={handleMomentumEnd}
+        contentContainerStyle={styles.carouselContent}
+        style={styles.carousel}
       >
-        <Text style={styles.dayName}>{DAY_NAMES[dayIndex]}</Text>
+        {RECIPES.map((recipe, index) => (
+          <View
+            key={DAY_NAMES[index]}
+            style={[
+              styles.card,
+              index === 0 && styles.cardFirst,
+              index === RECIPES.length - 1 && styles.cardLast,
+            ]}
+          >
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.cardContent}
+              nestedScrollEnabled
+            >
+              <Text style={styles.dayName}>{DAY_NAMES[index]}</Text>
 
-        <Text style={styles.recipeName}>{recipe.name}</Text>
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
-            <Ionicons name="time-outline" size={14} color="#9CA3AF" />
-            <Text style={styles.metaText}>{recipe.minutes} min</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="people-outline" size={14} color="#9CA3AF" />
-            <Text style={styles.metaText}>{recipe.servings} servings</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Ionicons name="wallet-outline" size={14} color="#9CA3AF" />
-            <Text style={styles.metaText}>
-              €{recipe.costPerServing.toFixed(2)} / serving
-            </Text>
-          </View>
-        </View>
+              <Text style={styles.recipeName}>{recipe.name}</Text>
+              <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.metaText}>{recipe.minutes} min</Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Ionicons name="people-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.metaText}>
+                    {recipe.servings} servings
+                  </Text>
+                </View>
+                <View style={styles.metaItem}>
+                  <Ionicons name="wallet-outline" size={14} color="#9CA3AF" />
+                  <Text style={styles.metaText}>
+                    €{recipe.costPerServing.toFixed(2)} / serving
+                  </Text>
+                </View>
+              </View>
 
-        <Text style={styles.sectionTitle}>Ingredients</Text>
-        {recipe.ingredients.map((ingredient) => (
-          <View key={ingredient} style={styles.listRow}>
-            <View style={styles.bullet} />
-            <Text style={styles.listText}>{ingredient}</Text>
-          </View>
-        ))}
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+              {recipe.ingredients.map((ingredient) => (
+                <View key={ingredient} style={styles.listRow}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.listText}>{ingredient}</Text>
+                </View>
+              ))}
 
-        <Text style={styles.sectionTitle}>Recipe</Text>
-        {recipe.steps.map((step, index) => (
-          <View key={step} style={styles.stepRow}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepNumber}>{index + 1}</Text>
-            </View>
-            <Text style={styles.listText}>{step}</Text>
+              <Text style={styles.sectionTitle}>Recipe</Text>
+              {recipe.steps.map((step, stepIndex) => (
+                <View key={step} style={styles.stepRow}>
+                  <View style={styles.stepBadge}>
+                    <Text style={styles.stepNumber}>{stepIndex + 1}</Text>
+                  </View>
+                  <Text style={styles.listText}>{step}</Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         ))}
       </ScrollView>
@@ -164,13 +213,29 @@ const styles = StyleSheet.create({
   dayPillTextSelected: {
     color: "#FFFFFF",
   },
-  body: {
+  carousel: {
     flex: 1,
+  },
+  carouselContent: {
+    paddingLeft: SIDE_INSET,
+    paddingRight: SIDE_INSET,
+  },
+  card: {
+    width: CARD_WIDTH,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    marginRight: CARD_GAP,
+    overflow: "hidden",
   },
-  bodyContent: {
+  cardFirst: {
+    borderRadius: 28,
+  },
+  cardLast: {
+    borderRadius: 28,
+    marginRight: 0,
+  },
+  cardContent: {
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 48,
