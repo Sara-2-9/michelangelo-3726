@@ -19,6 +19,19 @@ export default function DietScreen() {
   const router = useRouter();
   const { diet, setDiet } = usePlan();
 
+  const toggle = (id: string) => {
+    if (id === "none") {
+      setDiet(diet.includes("none") ? [] : ["none"]);
+      return;
+    }
+    const next = diet.filter((item) => item !== "none");
+    setDiet(
+      next.includes(id)
+        ? next.filter((item) => item !== id)
+        : [...next, id]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
@@ -28,12 +41,12 @@ export default function DietScreen() {
 
         <View style={styles.grid}>
           {OPTIONS.map((option) => {
-            const selected = diet === option.id;
+            const selected = diet.includes(option.id);
             return (
               <TouchableOpacity
                 key={option.id}
                 style={[styles.tile, selected && styles.tileSelected]}
-                onPress={() => setDiet(option.id)}
+                onPress={() => toggle(option.id)}
                 activeOpacity={0.8}
               >
                 {option.emoji ? (
@@ -47,7 +60,7 @@ export default function DietScreen() {
 
         <PrimaryButton
           label="Continue"
-          disabled={diet === null}
+          disabled={diet.length === 0}
           onPress={() => router.push("/goals")}
         />
       </View>

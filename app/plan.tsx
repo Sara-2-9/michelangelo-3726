@@ -9,14 +9,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlan } from "../context/PlanContext";
-import { DAYS, DAY_NAMES, RECIPES, weeklyCost } from "../utils/recipes";
+import { DAYS, DAY_NAMES, RECIPES } from "../utils/recipes";
 
 export default function PlanScreen() {
   const { budget } = usePlan();
   const [dayIndex, setDayIndex] = useState(0);
 
   const recipe = RECIPES[dayIndex];
-  const estCost = Math.min(Math.round(budget), Math.round(weeklyCost()));
+  const estCost = Math.round(budget);
 
   return (
     <View style={styles.screen}>

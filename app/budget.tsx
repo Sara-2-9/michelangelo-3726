@@ -27,14 +27,14 @@ export default function BudgetScreen() {
 
           <Slider
             style={styles.slider}
-            minimumValue={20}
-            maximumValue={200}
-            step={1}
+            minimumValue={25}
+            maximumValue={150}
+            step={5}
             value={budget}
             onValueChange={setBudget}
-            minimumTrackTintColor="#E5E7EB"
+            minimumTrackTintColor="#22C55E"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#FFFFFF"
+            thumbTintColor="#22C55E"
           />
         </View>
 
