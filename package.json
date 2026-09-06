@@ -22,5 +22,9 @@
     "expo-linking": "~8.0.12",
     "expo-constants": "~18.0.14"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
+  }
 }

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "michelangelo-3726",
-    "slug": "michelangelo",
+    "slug": "michelangelo-3726",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.michelangeloland.michelangelo3726",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,6 +28,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9f0d1518-4ca8-43c7-a737-111006856dce"
+      }
     }
   }
 }
